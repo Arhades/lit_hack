@@ -27,15 +27,35 @@ def test_api_key():
         print("🔍 Testing API connection...")
         
         client = openai.OpenAI(api_key=api_key)
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": "Say 'Hello, API test successful!'"}],
-            max_tokens=50,
-            temperature=0
-        )
+        
+        # Try different models to see which ones are available
+        models_to_try = ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo"]
+        response = None
+        used_model = None
+        
+        for model in models_to_try:
+            try:
+                response = client.chat.completions.create(
+                    model=model,
+                    messages=[{"role": "user", "content": "Say 'Hello, API test successful!'"}],
+                    max_tokens=50,
+                    temperature=0
+                )
+                used_model = model
+                break
+            except Exception as e:
+                if "model_not_found" in str(e) or "does not exist" in str(e):
+                    print(f"   Model {model} not available, trying next...")
+                    continue
+                else:
+                    raise e
+        
+        if response is None:
+            raise Exception("No available models found")
         
         result = response.choices[0].message.content
         print(f"✅ API test successful!")
+        print(f"   Model used: {used_model}")
         print(f"   Response: {result}")
         
         # Test with the PDPA advisor

@@ -95,12 +95,28 @@ class PDPALegalAdvisor:
         """
         
         try:
-            response = self.client.chat.completions.create(
-                model="gpt-4",
-                messages=[{"role": "user", "content": search_prompt}],
-                temperature=0.1,
-                max_tokens=500
-            )
+            # Try models in order of preference
+            models_to_try = ["gpt-4o-mini", "gpt-3.5-turbo", "gpt-4"]
+            response = None
+            
+            for model in models_to_try:
+                try:
+                    response = self.client.chat.completions.create(
+                        model=model,
+                        messages=[{"role": "user", "content": search_prompt}],
+                        temperature=0.1,
+                        max_tokens=500
+                    )
+                    break
+                except Exception as e:
+                    if "model_not_found" in str(e) or "does not exist" in str(e):
+                        print(f"Model {model} not available, trying next...")
+                        continue
+                    else:
+                        raise e
+            
+            if response is None:
+                raise Exception("No available models found")
             
             # Parse the response to get section numbers
             content = response.choices[0].message.content.strip()
@@ -199,12 +215,28 @@ class PDPALegalAdvisor:
         """
         
         try:
-            response = self.client.chat.completions.create(
-                model="gpt-4",
-                messages=[{"role": "user", "content": irac_prompt}],
-                temperature=0.1,
-                max_tokens=2000
-            )
+            # Try models in order of preference
+            models_to_try = ["gpt-4o-mini", "gpt-3.5-turbo", "gpt-4"]
+            response = None
+            
+            for model in models_to_try:
+                try:
+                    response = self.client.chat.completions.create(
+                        model=model,
+                        messages=[{"role": "user", "content": irac_prompt}],
+                        temperature=0.1,
+                        max_tokens=2000
+                    )
+                    break
+                except Exception as e:
+                    if "model_not_found" in str(e) or "does not exist" in str(e):
+                        print(f"Model {model} not available, trying next...")
+                        continue
+                    else:
+                        raise e
+            
+            if response is None:
+                raise Exception("No available models found")
             
             content = response.choices[0].message.content.strip()
             
