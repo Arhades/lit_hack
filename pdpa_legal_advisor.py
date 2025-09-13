@@ -162,6 +162,52 @@ class PDPALegalAdvisor:
                 })
         return sections
     
+    def is_legal_scenario(self, scenario: str) -> tuple[bool, str]:
+        """
+        Check if the scenario is related to legal/data protection issues
+        
+        Args:
+            scenario: The scenario to check
+            
+        Returns:
+            Tuple of (is_legal, reason)
+        """
+        # Convert to lowercase for checking
+        scenario_lower = scenario.lower()
+        
+        # Legal/data protection keywords
+        legal_keywords = [
+            'data', 'personal', 'privacy', 'consent', 'collection', 'disclosure',
+            'breach', 'access', 'correction', 'retention', 'protection', 'purpose',
+            'organization', 'individual', 'customer', 'client', 'employee', 'user',
+            'information', 'records', 'database', 'processing', 'storage', 'transfer',
+            'compliance', 'policy', 'procedure', 'notification', 'request', 'rights',
+            'unauthorized', 'security', 'confidential', 'sensitive', 'identifiable',
+            'pdp', 'gdpr', 'regulation', 'law', 'legal', 'statute', 'act',
+            'company', 'business', 'organization', 'entity', 'corporation'
+        ]
+        
+        # Check if scenario contains legal keywords
+        keyword_count = sum(1 for keyword in legal_keywords if keyword in scenario_lower)
+        
+        # Minimum threshold for legal relevance
+        if keyword_count < 2:
+            return False, "Scenario does not appear to contain legal or data protection related content. Please provide a scenario involving personal data, privacy, or legal compliance issues."
+        
+        # Check for obviously non-legal content
+        non_legal_indicators = [
+            'chocolate', 'labubu', 'matcha', 'food', 'recipe', 'cooking',
+            'gaming', 'game', 'entertainment', 'music', 'movie', 'book',
+            'weather', 'sports', 'travel', 'vacation', 'hobby', 'art',
+            'random', 'joke', 'meme', 'funny', 'test', 'hello', 'hi'
+        ]
+        
+        if any(indicator in scenario_lower for indicator in non_legal_indicators):
+            if keyword_count < 3:  # Lower threshold if non-legal indicators present
+                return False, "Scenario appears to be non-legal content. Please provide a factual scenario involving data protection, privacy, or legal compliance issues."
+        
+        return True, "Scenario appears to be legal-related."
+
     def generate_legal_advice(self, scenario: str) -> LegalAdvice:
         """
         Generate comprehensive legal advice using IRAC framework
@@ -172,6 +218,19 @@ class PDPALegalAdvisor:
         Returns:
             LegalAdvice object with structured analysis
         """
+        # First check if this is a legal scenario
+        is_legal, reason = self.is_legal_scenario(scenario)
+        if not is_legal:
+            return LegalAdvice(
+                issue="Input validation failed",
+                rule="The PDPA Legal Advisor is designed for data protection and privacy law scenarios only",
+                analysis=reason,
+                conclusion="Please provide a scenario involving personal data, privacy, or legal compliance issues.",
+                relevant_sections=[],
+                risk_level="N/A",
+                recommendations=["Provide a legal scenario involving data protection", "Include details about personal data handling", "Describe privacy or compliance concerns"]
+            )
+        
         # Get relevant sections
         relevant_sections = self.search_relevant_sections(scenario)
         

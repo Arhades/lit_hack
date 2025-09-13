@@ -224,16 +224,19 @@
         
         <div class="main-card">
             <div class="input-section">
-                <form id="analysisForm">
-                    <div class="form-group">
-                        <label for="scenario">Describe your factual scenario:</label>
-                        <textarea 
-                            id="scenario" 
-                            name="scenario" 
-                            placeholder="Enter a factual scenario related to data protection that you need legal advice on..."
-                            required
-                        ></textarea>
-                    </div>
+        <form id="analysisForm">
+            <div class="form-group">
+                <label for="scenario">Describe your factual scenario:</label>
+                <textarea 
+                    id="scenario" 
+                    name="scenario" 
+                    placeholder="Enter a factual scenario related to data protection, privacy, or legal compliance that you need legal advice on. Examples: data breach, consent issues, data subject requests, etc."
+                    required
+                ></textarea>
+                <small style="color: #666; font-size: 0.9em; margin-top: 5px; display: block;">
+                    💡 Focus on scenarios involving personal data, privacy, consent, data breaches, or compliance issues.
+                </small>
+            </div>
                     
                     <button type="submit" class="btn" id="analyzeBtn">
                         🔍 Analyze Scenario
@@ -241,12 +244,14 @@
                 </form>
                 
                 <div class="example-scenarios">
-                    <h3>Example Scenarios:</h3>
+                    <h3>Example Legal Scenarios:</h3>
                     <button type="button" class="example-btn" onclick="loadExample(0)">Data Collection Without Consent</button>
                     <button type="button" class="example-btn" onclick="loadExample(1)">Data Breach Notification</button>
                     <button type="button" class="example-btn" onclick="loadExample(2)">Data Subject Access Request</button>
                     <button type="button" class="example-btn" onclick="loadExample(3)">Marketing Communications</button>
                     <button type="button" class="example-btn" onclick="loadExample(4)">International Data Transfer</button>
+                    <button type="button" class="example-btn" onclick="loadExample(5)">Employee Data Processing</button>
+                    <button type="button" class="example-btn" onclick="loadExample(6)">Data Retention Policy</button>
                 </div>
             </div>
             
@@ -267,7 +272,9 @@
             "An organization experienced a data breach where personal data of 1000 customers was accessed by unauthorized parties. The breach was discovered 3 days ago.",
             "A customer requests access to their personal data and wants to correct some information. The organization has 30 days to respond but is unsure about the process.",
             "A company wants to send marketing messages to customers who have not opted in to receive such communications.",
-            "An organization is transferring personal data to a country that does not have adequate data protection laws."
+            "An organization is transferring personal data to a country that does not have adequate data protection laws.",
+            "A company wants to process employee personal data for HR purposes but is unsure about consent requirements and data retention periods.",
+            "An organization needs to establish a data retention policy but is unclear about the legal requirements for different types of personal data."
         ];
         
         function loadExample(index) {
