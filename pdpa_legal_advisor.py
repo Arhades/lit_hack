@@ -301,43 +301,93 @@ class PDPALegalAdvisor:
             
             content = response.choices[0].message.content.strip()
             
-            # Extract JSON from response
-            json_match = re.search(r'\{.*\}', content, re.DOTALL)
-            if json_match:
-                try:
-                    # Clean the JSON string to handle NaN values
-                    json_str = json_match.group()
-                    # Replace NaN with null
-                    json_str = json_str.replace('NaN', 'null')
-                    # Replace undefined with null
-                    json_str = json_str.replace('undefined', 'null')
-                    advice_data = json.loads(json_str)
-                except json.JSONDecodeError as e:
-                    print(f"JSON parsing error: {e}")
-                    advice_data = self._parse_fallback_response(content)
-            else:
-                # Fallback parsing
+            # Extract JSON from response with better pattern matching
+            json_patterns = [
+                r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}',  # More precise JSON object pattern
+                r'\{.*\}',  # Fallback to original pattern
+            ]
+            
+            advice_data = None
+            for pattern in json_patterns:
+                json_match = re.search(pattern, content, re.DOTALL)
+                if json_match:
+                    try:
+                        # Clean the JSON string to handle all NaN variations
+                        json_str = json_match.group()
+                        
+                        # Replace all possible NaN variations
+                        json_str = re.sub(r'\bNaN\b', 'null', json_str)
+                        json_str = re.sub(r'\bundefined\b', 'null', json_str)
+                        json_str = re.sub(r'\bnull\b', 'null', json_str)
+                        
+                        # Remove any remaining problematic values
+                        json_str = re.sub(r':\s*NaN\s*', ': null', json_str)
+                        json_str = re.sub(r':\s*undefined\s*', ': null', json_str)
+                        
+                        # Try to parse the cleaned JSON
+                        advice_data = json.loads(json_str)
+                        break  # Success, exit the loop
+                        
+                    except json.JSONDecodeError as e:
+                        print(f"JSON parsing error with pattern {pattern}: {e}")
+                        print(f"Problematic JSON: {json_str[:200]}...")
+                        continue  # Try next pattern
+            
+            # If no JSON could be parsed, use fallback
+            if advice_data is None:
+                print("Using fallback response parsing")
                 advice_data = self._parse_fallback_response(content)
             
             # Clean and validate the advice data
             def clean_text(text):
-                if text is None or text == 'NaN' or text == 'undefined':
+                if text is None or text == 'NaN' or text == 'undefined' or str(text).strip() == '':
                     return 'Information not available'
-                return str(text).replace('NaN', 'N/A').replace('undefined', 'N/A')
+                # Clean the text thoroughly
+                cleaned = str(text).replace('NaN', 'N/A').replace('undefined', 'N/A').strip()
+                return cleaned if cleaned else 'Information not available'
             
             def clean_list(lst):
                 if not isinstance(lst, list):
                     return []
-                return [clean_text(item) for item in lst if item is not None and item != 'NaN' and item != 'undefined']
+                cleaned_items = []
+                for item in lst:
+                    if item is not None and item != 'NaN' and item != 'undefined' and str(item).strip() != '':
+                        cleaned_items.append(clean_text(item))
+                return cleaned_items if cleaned_items else ['Consult with legal counsel']
+            
+            def validate_advice_data(data):
+                """Validate and clean the advice data structure"""
+                if not isinstance(data, dict):
+                    return self._parse_fallback_response("Invalid response format")
+                
+                # Ensure all required fields exist and are properly formatted
+                validated = {}
+                for key in ['issue', 'rule', 'analysis', 'conclusion', 'risk_level', 'recommendations']:
+                    if key in data:
+                        if key == 'recommendations':
+                            validated[key] = clean_list(data[key])
+                        else:
+                            validated[key] = clean_text(data[key])
+                    else:
+                        # Provide default values for missing fields
+                        if key == 'recommendations':
+                            validated[key] = ['Consult with legal counsel']
+                        else:
+                            validated[key] = 'Information not available'
+                
+                return validated
+            
+            # Validate the advice data
+            advice_data = validate_advice_data(advice_data)
             
             return LegalAdvice(
-                issue=clean_text(advice_data.get('issue', 'Unable to identify specific issues')),
-                rule=clean_text(advice_data.get('rule', 'Relevant rules not identified')),
-                analysis=clean_text(advice_data.get('analysis', 'Analysis not available')),
-                conclusion=clean_text(advice_data.get('conclusion', 'No conclusion reached')),
+                issue=advice_data['issue'],
+                rule=advice_data['rule'],
+                analysis=advice_data['analysis'],
+                conclusion=advice_data['conclusion'],
                 relevant_sections=relevant_sections,
-                risk_level=clean_text(advice_data.get('risk_level', 'Unknown')),
-                recommendations=clean_list(advice_data.get('recommendations', []))
+                risk_level=advice_data['risk_level'],
+                recommendations=advice_data['recommendations']
             )
             
         except Exception as e:
@@ -349,13 +399,27 @@ class PDPALegalAdvisor:
         # Clean the content to remove any problematic characters
         clean_content = content.replace('NaN', 'N/A').replace('undefined', 'N/A')
         
+        # Try to extract meaningful information from the content
+        issue = "Legal issues identified from scenario"
+        rule = "Relevant PDPA provisions apply"
+        analysis = clean_content[:500] + "..." if len(clean_content) > 500 else clean_content
+        conclusion = "Further legal review recommended"
+        risk_level = "Medium"
+        recommendations = ['Consult with legal counsel', 'Review PDPA compliance']
+        
+        # Try to extract risk level from content
+        if 'high' in clean_content.lower():
+            risk_level = "High"
+        elif 'low' in clean_content.lower():
+            risk_level = "Low"
+        
         return {
-            'issue': 'Legal issues identified from scenario',
-            'rule': 'Relevant PDPA provisions apply',
-            'analysis': clean_content[:500] + "..." if len(clean_content) > 500 else clean_content,
-            'conclusion': 'Further legal review recommended',
-            'risk_level': 'Medium',
-            'recommendations': ['Consult with legal counsel', 'Review PDPA compliance']
+            'issue': issue,
+            'rule': rule,
+            'analysis': analysis,
+            'conclusion': conclusion,
+            'risk_level': risk_level,
+            'recommendations': recommendations
         }
     
     def _create_error_advice(self, sections: List[Dict], error: str) -> LegalAdvice:

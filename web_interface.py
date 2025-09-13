@@ -112,4 +112,6 @@ if __name__ == '__main__':
         print(f"⚠️  Port 5000 in use, using port {port}")
     
     print(f"🌐 Open your browser to: http://localhost:{port}")
-    app.run(debug=True, host='0.0.0.0', port=port)
+    print(f"🌐 Alternative URL: http://127.0.0.1:{port}")
+    print(f"🌐 Network URL: http://10.119.143.159:{port}")
+    app.run(debug=True, host='127.0.0.1', port=port)
