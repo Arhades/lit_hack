@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDPA Legal Advisor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .main-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .input-section {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 120px;
+            transition: border-color 0.3s ease;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .result-section {
+            padding: 30px;
+            display: none;
+        }
+        
+        .result-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .result-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #495057;
+        }
+        
+        .risk-high { border-left-color: #dc3545; }
+        .risk-medium { border-left-color: #ffc107; }
+        .risk-low { border-left-color: #28a745; }
+        
+        .sections-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .sections-list li {
+            background: white;
+            margin: 5px 0;
+            padding: 10px 15px;
+            border-radius: 5px;
+            border-left: 3px solid #667eea;
+        }
+        
+        .recommendations {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .recommendations li {
+            background: white;
+            margin: 5px 0;
+            padding: 10px 15px;
+            border-radius: 5px;
+            border-left: 3px solid #28a745;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #f5c6cb;
+            margin: 20px 0;
+        }
+        
+        .example-scenarios {
+            margin-top: 20px;
+        }
+        
+        .example-scenarios h3 {
+            margin-bottom: 15px;
+            color: #495057;
+        }
+        
+        .example-btn {
+            background: #e9ecef;
+            color: #495057;
+            border: 1px solid #ced4da;
+            padding: 8px 15px;
+            border-radius: 5px;
+            margin: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        
+        .example-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏛️ PDPA Legal Advisor</h1>
+            <p>Singapore Personal Data Protection Act 2012 - IRAC Framework Analysis</p>
+        </div>
+        
+        <div class="main-card">
+            <div class="input-section">
+                <form id="analysisForm">
+                    <div class="form-group">
+                        <label for="scenario">Describe your factual scenario:</label>
+                        <textarea 
+                            id="scenario" 
+                            name="scenario" 
+                            placeholder="Enter a factual scenario related to data protection that you need legal advice on..."
+                            required
+                        ></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn" id="analyzeBtn">
+                        🔍 Analyze Scenario
+                    </button>
+                </form>
+                
+                <div class="example-scenarios">
+                    <h3>Example Scenarios:</h3>
+                    <button type="button" class="example-btn" onclick="loadExample(0)">Data Collection Without Consent</button>
+                    <button type="button" class="example-btn" onclick="loadExample(1)">Data Breach Notification</button>
+                    <button type="button" class="example-btn" onclick="loadExample(2)">Data Subject Access Request</button>
+                    <button type="button" class="example-btn" onclick="loadExample(3)">Marketing Communications</button>
+                    <button type="button" class="example-btn" onclick="loadExample(4)">International Data Transfer</button>
+                </div>
+            </div>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Analyzing scenario and generating legal advice...</p>
+            </div>
+            
+            <div class="result-section" id="resultSection">
+                <div id="resultContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const examples = [
+            "A company collected customer data without explicit consent and is now planning to sell it to third parties for marketing purposes.",
+            "An organization experienced a data breach where personal data of 1000 customers was accessed by unauthorized parties. The breach was discovered 3 days ago.",
+            "A customer requests access to their personal data and wants to correct some information. The organization has 30 days to respond but is unsure about the process.",
+            "A company wants to send marketing messages to customers who have not opted in to receive such communications.",
+            "An organization is transferring personal data to a country that does not have adequate data protection laws."
+        ];
+        
+        function loadExample(index) {
+            document.getElementById('scenario').value = examples[index];
+        }
+        
+        document.getElementById('analysisForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const scenario = document.getElementById('scenario').value;
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const loading = document.getElementById('loading');
+            const resultSection = document.getElementById('resultSection');
+            const resultContent = document.getElementById('resultContent');
+            
+            // Show loading state
+            analyzeBtn.disabled = true;
+            loading.style.display = 'block';
+            resultSection.style.display = 'none';
+            
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ scenario: scenario })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    displayResult(data);
+                } else {
+                    displayError(data.error || 'An error occurred');
+                }
+            } catch (error) {
+                displayError('Network error: ' + error.message);
+            } finally {
+                analyzeBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        });
+        
+        function displayResult(data) {
+            const resultContent = document.getElementById('resultContent');
+            const resultSection = document.getElementById('resultSection');
+            
+            let html = `
+                <div class="result-card">
+                    <div class="result-title">🔍 Issue</div>
+                    <p>${data.issue}</p>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-title">📋 Rule</div>
+                    <p>${data.rule}</p>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-title">🔬 Analysis</div>
+                    <p>${data.analysis}</p>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-title">✅ Conclusion</div>
+                    <p>${data.conclusion}</p>
+                </div>
+                
+                <div class="result-card risk-${data.risk_level.toLowerCase()}">
+                    <div class="result-title">⚠️ Risk Level: ${data.risk_level.toUpperCase()}</div>
+                </div>
+            `;
+            
+            if (data.relevant_sections && data.relevant_sections.length > 0) {
+                html += `
+                    <div class="result-card">
+                        <div class="result-title">📚 Relevant Sections</div>
+                        <ul class="sections-list">
+                `;
+                data.relevant_sections.forEach(section => {
+                    html += `<li><strong>Section ${section.section_number}:</strong> ${section.title}</li>`;
+                });
+                html += `</ul></div>`;
+            }
+            
+            if (data.recommendations && data.recommendations.length > 0) {
+                html += `
+                    <div class="result-card">
+                        <div class="result-title">💡 Recommendations</div>
+                        <ul class="recommendations">
+                `;
+                data.recommendations.forEach(rec => {
+                    html += `<li>${rec}</li>`;
+                });
+                html += `</ul></div>`;
+            }
+            
+            resultContent.innerHTML = html;
+            resultSection.style.display = 'block';
+        }
+        
+        function displayError(message) {
+            const resultContent = document.getElementById('resultContent');
+            const resultSection = document.getElementById('resultSection');
+            
+            resultContent.innerHTML = `<div class="error">❌ Error: ${message}</div>`;
+            resultSection.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
