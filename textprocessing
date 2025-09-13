@@ -1,0 +1,28 @@
+import re
+
+file_path = "/Users/eljonxs/Downloads/PDPA2012.txt"
+with open(file_path, encoding="utf-8") as f:
+    text = f.read()
+
+# Use regex to find all section headers and split
+pattern = re.compile(r'(?m)^(\d{1,3})\.\s+(.+)$')
+matches = list(pattern.finditer(text))
+
+sections = []
+for i, match in enumerate(matches):
+    section_number = match.group(1)
+    section_title = match.group(2)
+    start = match.end()
+    # End is start of next match, or end of doc
+    end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
+    section_text = text[start:end].strip()
+    sections.append({
+        "section_number": section_number,
+        "section_title": section_title,
+        "text": section_text
+    })
+
+# Save as CSV or process further
+import pandas as pd
+df = pd.DataFrame(sections)
+df.to_csv("pdpa_sections.csv", index=False)
