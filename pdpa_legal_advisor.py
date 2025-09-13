@@ -55,13 +55,13 @@ class PDPALegalAdvisor:
     def _setup_openai_client(self, api_key: Optional[str] = None):
         """Setup OpenAI client"""
         if api_key:
-            openai.api_key = api_key
+            self.client = openai.OpenAI(api_key=api_key)
         elif os.getenv("OPENAI_API_KEY"):
-            openai.api_key = os.getenv("OPENAI_API_KEY")
+            self.client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         else:
             raise ValueError("OpenAI API key not provided. Set OPENAI_API_KEY environment variable or pass api_key parameter.")
         
-        return openai
+        return self.client
     
     def search_relevant_sections(self, scenario: str, top_k: int = 10) -> List[Dict[str, str]]:
         """
@@ -95,7 +95,7 @@ class PDPALegalAdvisor:
         """
         
         try:
-            response = self.client.ChatCompletion.create(
+            response = self.client.chat.completions.create(
                 model="gpt-4",
                 messages=[{"role": "user", "content": search_prompt}],
                 temperature=0.1,
@@ -199,7 +199,7 @@ class PDPALegalAdvisor:
         """
         
         try:
-            response = self.client.ChatCompletion.create(
+            response = self.client.chat.completions.create(
                 model="gpt-4",
                 messages=[{"role": "user", "content": irac_prompt}],
                 temperature=0.1,
