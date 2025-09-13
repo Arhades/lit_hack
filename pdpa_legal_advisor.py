@@ -234,6 +234,17 @@ class PDPALegalAdvisor:
         # Get relevant sections
         relevant_sections = self.search_relevant_sections(scenario)
         
+        # Clean the relevant sections data
+        cleaned_sections = []
+        for section in relevant_sections:
+            cleaned_section = {
+                'section_number': str(section.get('section_number', '')).replace('NaN', 'N/A').replace('nan', 'N/A'),
+                'title': str(section.get('title', '')).replace('NaN', 'N/A').replace('nan', 'N/A'),
+                'text': str(section.get('text', '')).replace('NaN', 'N/A').replace('nan', 'N/A').replace('undefined', 'N/A')
+            }
+            cleaned_sections.append(cleaned_section)
+        relevant_sections = cleaned_sections
+        
         # Prepare context for IRAC analysis
         sections_context = "\n\n".join([
             f"Section {s['section_number']}: {s['title']}\n{s['text']}"
