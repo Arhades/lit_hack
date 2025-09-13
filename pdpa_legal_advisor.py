@@ -262,7 +262,7 @@ class PDPALegalAdvisor:
         - Specific recommendations for compliance
         - Potential penalties or consequences
         
-        Format your response as JSON with these fields:
+        Format your response as valid JSON with these exact fields (use null for missing values, not NaN or undefined):
         {{
             "issue": "string",
             "rule": "string", 
@@ -271,6 +271,8 @@ class PDPALegalAdvisor:
             "risk_level": "Low/Medium/High",
             "recommendations": ["recommendation1", "recommendation2", ...]
         }}
+        
+        IMPORTANT: Ensure all values are valid JSON strings, numbers, or arrays. Do not use NaN, undefined, or other invalid JSON values.
         """
         
         try:
@@ -302,19 +304,40 @@ class PDPALegalAdvisor:
             # Extract JSON from response
             json_match = re.search(r'\{.*\}', content, re.DOTALL)
             if json_match:
-                advice_data = json.loads(json_match.group())
+                try:
+                    # Clean the JSON string to handle NaN values
+                    json_str = json_match.group()
+                    # Replace NaN with null
+                    json_str = json_str.replace('NaN', 'null')
+                    # Replace undefined with null
+                    json_str = json_str.replace('undefined', 'null')
+                    advice_data = json.loads(json_str)
+                except json.JSONDecodeError as e:
+                    print(f"JSON parsing error: {e}")
+                    advice_data = self._parse_fallback_response(content)
             else:
                 # Fallback parsing
                 advice_data = self._parse_fallback_response(content)
             
+            # Clean and validate the advice data
+            def clean_text(text):
+                if text is None or text == 'NaN' or text == 'undefined':
+                    return 'Information not available'
+                return str(text).replace('NaN', 'N/A').replace('undefined', 'N/A')
+            
+            def clean_list(lst):
+                if not isinstance(lst, list):
+                    return []
+                return [clean_text(item) for item in lst if item is not None and item != 'NaN' and item != 'undefined']
+            
             return LegalAdvice(
-                issue=advice_data.get('issue', 'Unable to identify specific issues'),
-                rule=advice_data.get('rule', 'Relevant rules not identified'),
-                analysis=advice_data.get('analysis', 'Analysis not available'),
-                conclusion=advice_data.get('conclusion', 'No conclusion reached'),
+                issue=clean_text(advice_data.get('issue', 'Unable to identify specific issues')),
+                rule=clean_text(advice_data.get('rule', 'Relevant rules not identified')),
+                analysis=clean_text(advice_data.get('analysis', 'Analysis not available')),
+                conclusion=clean_text(advice_data.get('conclusion', 'No conclusion reached')),
                 relevant_sections=relevant_sections,
-                risk_level=advice_data.get('risk_level', 'Unknown'),
-                recommendations=advice_data.get('recommendations', [])
+                risk_level=clean_text(advice_data.get('risk_level', 'Unknown')),
+                recommendations=clean_list(advice_data.get('recommendations', []))
             )
             
         except Exception as e:
@@ -323,10 +346,13 @@ class PDPALegalAdvisor:
     
     def _parse_fallback_response(self, content: str) -> Dict[str, Any]:
         """Fallback method to parse non-JSON responses"""
+        # Clean the content to remove any problematic characters
+        clean_content = content.replace('NaN', 'N/A').replace('undefined', 'N/A')
+        
         return {
             'issue': 'Legal issues identified from scenario',
             'rule': 'Relevant PDPA provisions apply',
-            'analysis': content[:500] + "..." if len(content) > 500 else content,
+            'analysis': clean_content[:500] + "..." if len(clean_content) > 500 else clean_content,
             'conclusion': 'Further legal review recommended',
             'risk_level': 'Medium',
             'recommendations': ['Consult with legal counsel', 'Review PDPA compliance']

@@ -223,6 +223,7 @@
         </div>
         
         <div class="main-card">
+            <div id="status-message" style="display: none; padding: 15px; margin: 10px; border-radius: 8px; text-align: center;"></div>
             <div class="input-section">
         <form id="analysisForm">
             <div class="form-group">
@@ -240,6 +241,9 @@
                     
                     <button type="submit" class="btn" id="analyzeBtn">
                         🔍 Analyze Scenario
+                    </button>
+                    <button type="button" class="btn" id="reinitBtn" style="background: #6c757d; margin-left: 10px;">
+                        🔄 Reinitialize
                     </button>
                 </form>
                 
@@ -281,6 +285,47 @@
             document.getElementById('scenario').value = examples[index];
         }
         
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status-message');
+            statusDiv.textContent = message;
+            statusDiv.style.display = 'block';
+            statusDiv.style.backgroundColor = type === 'error' ? '#f8d7da' : type === 'success' ? '#d4edda' : '#d1ecf1';
+            statusDiv.style.color = type === 'error' ? '#721c24' : type === 'success' ? '#155724' : '#0c5460';
+            statusDiv.style.border = `1px solid ${type === 'error' ? '#f5c6cb' : type === 'success' ? '#c3e6cb' : '#bee5eb'}`;
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Reinitialize button functionality
+        document.getElementById('reinitBtn').addEventListener('click', async function() {
+            this.disabled = true;
+            this.textContent = '🔄 Reinitializing...';
+            
+            try {
+                const response = await fetch('/reinit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus('✅ ' + data.message, 'success');
+                } else {
+                    showStatus('❌ ' + data.message, 'error');
+                }
+            } catch (error) {
+                showStatus('❌ Network error: ' + error.message, 'error');
+            } finally {
+                this.disabled = false;
+                this.textContent = '🔄 Reinitialize';
+            }
+        });
+        
         document.getElementById('analysisForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -312,7 +357,11 @@
                     displayError(data.error || 'An error occurred');
                 }
             } catch (error) {
-                displayError('Network error: ' + error.message);
+                if (error.message.includes('fetch')) {
+                    displayError('Network error: Unable to connect to server. Please check if the server is running and try the reinitialize button.');
+                } else {
+                    displayError('Error: ' + error.message);
+                }
             } finally {
                 analyzeBtn.disabled = false;
                 loading.style.display = 'none';
